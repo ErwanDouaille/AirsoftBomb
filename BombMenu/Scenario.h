@@ -18,10 +18,7 @@ char keys[] =   // Define keys' values of Keypad
 };
 int values[] =   // Define keys' values of Keypad
 {
-  948, 479, 320, 240,
-  784, 434, 298, 230,
-  668, 396, 275, 218,
-  571, 368, 261, 208
+984,507,341,256,817,459,318,243,698,418,299,231,610,385,281,221
 };
 static OnewireKeypad <Print, 16 > Keypad(Serial, keys, values, 4, 4, A0, 220, 1000);
 
@@ -36,7 +33,7 @@ class Scenario
     }
     
     virtual void runScenario() =0;
-    void setLCDText(char* aString, int x, int y, bool clearLCD = false, bool defaultTitle = true)
+    void setLCDText(const char* aString, int x, int y, bool clearLCD = false, bool defaultTitle = true)
     {
       if (clearLCD)
          lcd.clear();
@@ -47,6 +44,14 @@ class Scenario
       }
       lcd.setCursor(x, y);
       lcd.print(aString);
+    }
+    
+    void beeping(int buzzerPin, int minDelay, int maxDelay)
+    {
+      digitalWrite(buzzerPin, HIGH);
+      delay(maxDelay);
+      digitalWrite(buzzerPin, LOW);
+      delay(minDelay);
     }
 
     void initLCD()

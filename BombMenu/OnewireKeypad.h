@@ -78,9 +78,10 @@ char OnewireKeypad< T, MAX_KEYS >::Getkey()
   int threshold = 4;
   if( int reading = analogRead(_Pin))
   {
+      Serial.print(reading);
+      Serial.print(",");
     if(millis() - startTime > debounceTime)
     {
-      Serial.println(reading);
       for( byte i = 0, R = _Rows-1, C = _Cols-1; i < SIZE; i++ )
       {
         if(reading <= (_Values[(SIZE-1)-i] + threshold) && reading >= (_Values[(SIZE-1)-i] - threshold))

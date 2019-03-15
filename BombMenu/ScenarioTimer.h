@@ -3,50 +3,28 @@
 
 #include "Scenario.h"
 class ScenarioTimer;
-class ScenarioTimer;
-Timer timer;
-ScenarioTimer* scenarioTimer;
-int timerId;
-int duration = -1;
-int durationAlerte = -1;
-int delayBeeper = 100;
-int delayTimer = 1000;
-int buzzerPin = 2;
-int desamorcedPin = 3;
-bool desamorced = false;
 
-void beeping(int minDelay, int maxDelay)
-{
-    digitalWrite(buzzerPin, HIGH);
-    delay(maxDelay);
-    digitalWrite(buzzerPin, LOW);
-    delay(minDelay);
-}
+ScenarioTimer* currentInstance;
 
-void desamorcedLed()
-{
-    digitalWrite(desamorcedPin, HIGH);
-}
-    
-void counter();
+static void counter(void*);
 
-class ScenarioTimer : public Scenario 
+class ScenarioTimer : public Scenario
 {
-  public: 
-    ScenarioTimer(char* aName) 
-    : Scenario(aName)
+  public:
+    ScenarioTimer(char* aName)
+      : Scenario(aName), duration(-1), durationAlerte(-1), desamorced(false), delayBeeper(100), delayTimer(1000)
     {
-      Serial.begin(9600); 
+      Serial.begin(9600);
       setCurrentState(State::PLAY);
       Keypad.SetHoldTime(100);  // Key held time in ms
       Keypad.SetDebounceTime(50); // Key Debounce time in ms
-      scenarioTimer = this;
+      currentInstance = this;      
     }
-    
+
     void initSettings()
     {
       setCurrentState(State::PLAY);
-      scenarioTimer->setLCDText("Duree en minutes", 0, 0, true, false);
+      setLCDText("Duree en minutes", 0, 0, true, false);
       bool finishInit = false;
       String inString = "";
       while (!finishInit)
@@ -54,8 +32,8 @@ class ScenarioTimer : public Scenario
         if ((Keypad.Key_State() == 3))
         {
           char keypress = Keypad.Getkey();
-          if (keypress == 'A'){}
-          else if (keypress == 'B'){}
+          if (keypress == 'A') {}
+          else if (keypress == 'B') {}
           else if (keypress == 'C')
           {
             finishInit = true;
@@ -65,7 +43,7 @@ class ScenarioTimer : public Scenario
             setCurrentState(State::STOP);
             return;
           }
-          else 
+          else
           {
             if (isDigit(keypress))
               inString += keypress;
@@ -78,11 +56,11 @@ class ScenarioTimer : public Scenario
       }
       duration = inString.toInt() * 60;
       durationAlerte = duration / 3;
-      timerId = timer.every(delayTimer, counter, -1);
+      timerId = timer.every(delayTimer, counter, NULL);
     }
 
     void reset()
-    {      
+    {
       pinMode(buzzerPin, OUTPUT);
       delayBeeper = 100;
       delayTimer = 1000;
@@ -90,16 +68,64 @@ class ScenarioTimer : public Scenario
       digitalWrite(buzzerPin, LOW);
       digitalWrite(desamorcedPin, LOW);
       initSettings();
-    }    
+    }
     
-    void down() { m_currentId = (m_currentId+1) > m_length ? 0 : m_currentId + 1;}
-    void up() {m_currentId = (m_currentId-1) < 0 ? m_length : m_currentId - 1;}
-    Scenario* select() {return m_menuList[m_currentId];}
-    void back() {setCurrentState(State::STOP);}
-    
+    void desamorcedLed()
+    {
+      digitalWrite(desamorcedPin, HIGH);
+    }
 
-    
-    virtual void runScenario() override 
+    void printDuration()
+    {
+      int n = durationAlerte == -1 ? duration / 2 : duration;
+      int hour = n / 3600;
+      n %= 3600;
+      int minutes = n / 60 ;
+      n %= 60;
+      int seconds = n;
+
+      char timestr[16];
+      timestr[0] = 'T';
+      timestr[1] = 'I';
+      timestr[2] = 'M';
+      timestr[3] = 'E';
+      timestr[4] = 'R';
+      timestr[5] = ':';
+      timestr[6] = ' ';
+      timestr[7] = '0' + hour / 10;
+      timestr[8] = '0' + hour % 10;
+      timestr[9] = ':';
+      timestr[10] = '0' + minutes / 10;
+      timestr[11] = '0' + minutes % 10;
+      timestr[12] = ':';
+      timestr[13] = '0' + seconds / 10;
+      timestr[14] = '0' + seconds % 10;
+      timestr[15] = '\0';
+      setLCDText(timestr, 0, 0, true, false);
+    }
+
+    void counterScenarioTimer()
+    {
+      beeping(buzzerPin, 10, delayBeeper);
+      duration = duration > 0 ? duration - 1 : duration;
+      if (duration < durationAlerte )
+      {
+        duration = duration * 2;
+        delayTimer = delayTimer / 2;
+        delayBeeper = delayBeeper / 2;
+        durationAlerte = -1;
+        timer.stop(timerId);
+        timerId = timer.every(delayTimer, counter, NULL);
+      }
+      if (duration == 0)
+      {
+        timer.stop(timerId);
+        digitalWrite(buzzerPin, HIGH);
+      }
+      printDuration();
+    }
+
+    virtual void runScenario() override
     {
       reset();
       while (m_currentState == State::PLAY)
@@ -110,60 +136,19 @@ class ScenarioTimer : public Scenario
           desamorcedLed();
       }
     };
-  
+
   private:
-    Scenario** m_menuList;
-    int m_length, m_currentId;
+    int timerId;
+    int duration;
+    int durationAlerte;
+    bool desamorced;
+    int delayBeeper;
+    int delayTimer;
+    int buzzerPin = 6;
+    int desamorcedPin = 7;
+    Timer timer;
 };
 
-void printDuration()
-{
-  int n = durationAlerte == -1 ? duration / 2 : duration;
-  int hour = n / 3600;   
-  n %= 3600; 
-  int minutes = n / 60 ; 
-  n %= 60; 
-  int seconds = n; 
-  
-  char timestr[16];
-  timestr[0] = 'T';
-  timestr[1] = 'I';
-  timestr[2] = 'M';
-  timestr[3] = 'E';
-  timestr[4] = 'R';
-  timestr[5] = ':';
-  timestr[6] = ' ';
-  timestr[7] = '0' + hour / 10;
-  timestr[8] = '0' + hour % 10;
-  timestr[9] = ':';
-  timestr[10] = '0' + minutes / 10;
-  timestr[11] = '0' + minutes % 10;
-  timestr[12] = ':';
-  timestr[13] = '0' + seconds / 10;
-  timestr[14] = '0' + seconds % 10;
-  timestr[15] = '\0';
-  scenarioTimer->setLCDText(timestr, 0, 0, true, false);
-}
-    
-void counter()
-{
-  beeping(10, delayBeeper);
-  duration = duration > 0 ? duration-1 : duration;
-  if (duration < durationAlerte )
-  {
-    duration = duration *2;
-    delayTimer = delayTimer/2;
-    delayBeeper = delayBeeper/2;
-    durationAlerte = -1;
-    timer.stop(timerId);
-    timerId = timer.every(delayTimer, counter, -1);
-  }
-  if (duration == 0)
-  {
-    timer.stop(timerId);
-    digitalWrite(buzzerPin, HIGH);
-  }   
-  printDuration();
-}
+static void counter(void*) { currentInstance->counterScenarioTimer();}
 
 #endif
