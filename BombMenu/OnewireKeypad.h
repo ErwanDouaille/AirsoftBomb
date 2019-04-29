@@ -30,8 +30,10 @@ class OnewireKeypad{
     : port_( port ), latchedKey( BitBool< MAX_KEYS >() ), _Data( KP ),_Rows( Rows ), _Cols( Cols ), _Pin( Pin ),
     holdTime( 500 ), startTime( 0 ), lastState( 0 ), lastRead( 0 ), debounceTime( 10 ), Num( 0 ), R1( R1 ), R2( R2 ), vcc(_vcc), analogStartValue(_analogStartValue)
     {
+      init();
     }
-    
+
+    void init();
     char	Getkey();
     void	SetHoldTime(unsigned long setH_Time)       { holdTime = setH_Time; }
     void	SetDebounceTime(unsigned long setD_Time)       { debounceTime = setD_Time; }
@@ -60,6 +62,7 @@ class OnewireKeypad{
     bool state, lastState, lastRead;
     int R1, R2;    
     float vcc, analogStartValue;
+    float* defaultValues;
 };
 
 struct{
@@ -76,31 +79,48 @@ template < typename T > struct IsSameType< T, T > {
 };
 
 template < typename T, unsigned MAX_KEYS >
-char OnewireKeypad< T, MAX_KEYS >::Getkey()
+void OnewireKeypad< T, MAX_KEYS >::init()
 {  
-  int threshold = 5;
+  defaultValues = (float*) malloc(_Rows * _Cols * sizeof(float));
+  for( byte i = 0, R = _Rows-1, C = _Cols-1; i < SIZE; i++ )
+  {
+    float V = (vcc * float( R2)) / (float(R2) + (float(R1) * float(R)) + (float(R2) * float(C)) );
+    float Vfinal = V * (analogStartValue / vcc);
+    defaultValues[i] = Vfinal;
+    if( C == 0 )
+    {
+      R--;
+      C = _Cols-1;
+    }
+    else C--;   
+  }
+}
+
+template < typename T, unsigned MAX_KEYS >
+char OnewireKeypad< T, MAX_KEYS >::Getkey()
+{
   if( int reading = analogRead(_Pin))
   {
-    if(millis() - startTime > debounceTime)
+    int bestIndex = -1;
+    float bestValue = 999.0f;
+    for( byte i = 0, R = _Rows-1, C = _Cols-1; i < SIZE; i++ )
     {
-     
-      for( byte i = 0, R = _Rows-1, C = _Cols-1; i < SIZE; i++ )
+      if (bestValue > abs(defaultValues[i] - reading))
       {
-        float V = (vcc * float( R2)) / (float(R2) + (float(R1) * float(R)) + (float(R2) * float(C)) );
-        float Vfinal = V * (analogStartValue / vcc);
-        
-        if(reading <= (int(Vfinal) + threshold) && reading >= (int(Vfinal) - threshold)) 
-          return _Data[(SIZE-1)-i];
-        if( C == 0 )
-          {
-          R--;
-          C = _Cols-1;
-        }
-        else C--;		
+        bestIndex = i;
+        bestValue = abs(defaultValues[i] - reading);
       }
-      startTime = millis();
+      if( C == 0 )
+      {
+        R--;
+        C = _Cols-1;
+      }
+      else C--;   
     }
-  } 
+  
+    if (bestIndex != -1)
+      return _Data[(SIZE-1)-bestIndex];
+  }
   return NO_KEY; 
 }
 

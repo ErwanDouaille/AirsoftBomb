@@ -18,7 +18,7 @@ char keys[] =   // Define keys' values of Keypad
   '*', '0', '#', 'D'
 };
 
-static OnewireKeypad <Print, 16 > Keypad(Serial, keys, 4, 4, A0, 220, 1000, 3.3f, 663.0f);
+static OnewireKeypad <Print, 16 > Keypad(Serial, keys, 4, 4, A0, 220, 1000, 3.3f, 665.0f);
 
 class Scenario
 {

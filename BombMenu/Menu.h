@@ -28,8 +28,6 @@ class Menu : public Scenario
         if ((Keypad.Key_State() == 3))
         {
           char keypress = Keypad.Getkey();
-          Serial.print("\nValue ");
-          Serial.println(keypress);
           if (keypress == 'A')
           {
             up();

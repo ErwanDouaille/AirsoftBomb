@@ -15,15 +15,15 @@ class ScenarioDomination : public Scenario
       : Scenario(aName), duration(-1), durationAlerte(-1), delayBeeper(100), delayTimer(1000)
     {
       Serial.begin(9600);
-      currentInstanceScenarioDomination = this;      
+      currentInstanceScenarioDomination = this;     
+      Keypad.SetHoldTime(100);  // Key held time in ms
+      Keypad.SetDebounceTime(50); // Key Debounce time in ms 
       reset();
     }
 
     void reset()
     {
       setCurrentState(State::PLAY);
-      Keypad.SetHoldTime(100);  // Key held time in ms
-      Keypad.SetDebounceTime(50); // Key Debounce time in ms
       pinMode(buzzerPin, OUTPUT);
       delayBeeper = 100;
       delayTimer = 1000;
