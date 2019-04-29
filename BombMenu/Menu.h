@@ -28,6 +28,8 @@ class Menu : public Scenario
         if ((Keypad.Key_State() == 3))
         {
           char keypress = Keypad.Getkey();
+          Serial.print("\nValue ");
+          Serial.println(keypress);
           if (keypress == 'A')
           {
             up();
@@ -40,6 +42,8 @@ class Menu : public Scenario
           {
             select();
           }
+          
+          setLCDText(getCurrentMenu()->getName(), 0, 1, true, true);
           setLCDText(getCurrentMenu()->getName(), 0, 1, true, true);
           while ((Keypad.Key_State())) {} // Stay here while Key is held down
         }

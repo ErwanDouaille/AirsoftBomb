@@ -2,7 +2,8 @@
 #define Scenario_h
 
 // LCD
-#include <Wire.h>  // Comes with Arduino IDE
+#include <LCD.h>
+#include <LiquidCrystal.h>
 #include <LiquidCrystal_I2C.h>
 
 static LiquidCrystal_I2C lcd(0x3F, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);  // Set the LCD I2C address
@@ -16,11 +17,8 @@ char keys[] =   // Define keys' values of Keypad
   '7', '8', '9', 'C',
   '*', '0', '#', 'D'
 };
-int values[] =   // Define keys' values of Keypad
-{
-984,507,341,256,817,459,318,243,698,418,299,231,610,385,281,221
-};
-static OnewireKeypad <Print, 16 > Keypad(Serial, keys, values, 4, 4, A0, 220, 1000);
+
+static OnewireKeypad <Print, 16 > Keypad(Serial, keys, 4, 4, A0, 220, 1000, 3.3f, 663.0f);
 
 class Scenario
 {

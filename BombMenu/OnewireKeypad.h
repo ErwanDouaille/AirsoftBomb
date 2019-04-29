@@ -25,38 +25,41 @@ typedef MissingType LCDTYPE;
 /*--- Main Class ---*/
 template< typename T, unsigned MAX_KEYS >
 class OnewireKeypad{
-public: 
-OnewireKeypad( T &port, char KP[], int KV[], uint8_t Rows, uint8_t Cols, uint8_t Pin, int R1, int R2 ) 
-: port_( port ), latchedKey( BitBool< MAX_KEYS >() ), _Data( KP ), _Values(KV), _Rows( Rows ), _Cols( Cols ), _Pin( Pin ),
-holdTime( 500 ), startTime( 0 ), lastState( 0 ), lastRead( 0 ), debounceTime( 10 ), Num( 0 ), R1( R1 ), R2( R2 ) { }
-
-char	Getkey();
-void	SetHoldTime(unsigned long setH_Time)       { holdTime = setH_Time; }
-void	SetDebounceTime(unsigned long setD_Time)       { debounceTime = setD_Time; }
-uint8_t	Key_State();
-bool	Readpin()      { return analogRead(_Pin)? 1 : 0; }
-void	LatchKey();
-bool	checkLatchedKey(char _key);
-void	addEventKey(void (*userFunc)(void), char KEY);
-void	deleteEventKey(char KEY);
-void	ListenforEventKey();
-
-protected: 
-T &port_;
-
-private:
-BitBool< MAX_KEYS > latchedKey;    
-char *_Data;                    
-int * _Values;                      
-uint8_t _Rows, _Cols, _Pin;
-enum{ SIZE = MAX_KEYS };
-int Num;	
-unsigned long time;
-unsigned long holdTime;
-unsigned long startTime;
-unsigned long debounceTime;  
-bool state, lastState, lastRead;
-int R1, R2;    
+  public: 
+    OnewireKeypad( T &port, char KP[], uint8_t Rows, uint8_t Cols, uint8_t Pin, int R1, int R2, float _vcc, float _analogStartValue) 
+    : port_( port ), latchedKey( BitBool< MAX_KEYS >() ), _Data( KP ),_Rows( Rows ), _Cols( Cols ), _Pin( Pin ),
+    holdTime( 500 ), startTime( 0 ), lastState( 0 ), lastRead( 0 ), debounceTime( 10 ), Num( 0 ), R1( R1 ), R2( R2 ), vcc(_vcc), analogStartValue(_analogStartValue)
+    {
+    }
+    
+    char	Getkey();
+    void	SetHoldTime(unsigned long setH_Time)       { holdTime = setH_Time; }
+    void	SetDebounceTime(unsigned long setD_Time)       { debounceTime = setD_Time; }
+    uint8_t	Key_State();
+    bool	Readpin()      { return analogRead(_Pin)? 1 : 0; }
+    void	LatchKey();
+    bool	checkLatchedKey(char _key);
+    void	addEventKey(void (*userFunc)(void), char KEY);
+    void	deleteEventKey(char KEY);
+    void	ListenforEventKey();
+  
+  protected: 
+    T &port_;
+  
+  private:
+    BitBool< MAX_KEYS > latchedKey;    
+    char *_Data;                    
+    int * _Values;                      
+    uint8_t _Rows, _Cols, _Pin;
+    enum{ SIZE = MAX_KEYS };
+    int Num;	
+    unsigned long time;
+    unsigned long holdTime;
+    unsigned long startTime;
+    unsigned long debounceTime;  
+    bool state, lastState, lastRead;
+    int R1, R2;    
+    float vcc, analogStartValue;
 };
 
 struct{
@@ -75,35 +78,26 @@ template < typename T > struct IsSameType< T, T > {
 template < typename T, unsigned MAX_KEYS >
 char OnewireKeypad< T, MAX_KEYS >::Getkey()
 {  
-  int threshold = 4;
+  int threshold = 5;
   if( int reading = analogRead(_Pin))
   {
-      Serial.print(reading);
-      Serial.print(",");
     if(millis() - startTime > debounceTime)
     {
+     
       for( byte i = 0, R = _Rows-1, C = _Cols-1; i < SIZE; i++ )
       {
-        if(reading <= (_Values[(SIZE-1)-i] + threshold) && reading >= (_Values[(SIZE-1)-i] - threshold))
+        float V = (vcc * float( R2)) / (float(R2) + (float(R1) * float(R)) + (float(R2) * float(C)) );
+        float Vfinal = V * (analogStartValue / vcc);
+        
+        if(reading <= (int(Vfinal) + threshold) && reading >= (int(Vfinal) - threshold)) 
           return _Data[(SIZE-1)-i];
+        if( C == 0 )
+          {
+          R--;
+          C = _Cols-1;
+        }
+        else C--;		
       }
-     
-//      for( byte i = 0, R = _Rows-1, C = _Cols-1; i < SIZE; i++ )
-//      {
-//        float V = (5.0f * float( R2 )) / (float(R2) + (float(R1) * float(R)) + (float(R2) * float(C)));
-//        float Vfinal = V * (1023.0f / 5.0f);
-//        int threshold = 2;
-//        threshold = 50;
-//        
-//        if(reading <= (int(Vfinal) + threshold) && reading >= (int(Vfinal) - threshold)) 
-//          return _Data[(SIZE-1)-i];
-//        if( C == 0 )
-//          {
-//          R--;
-//          C = _Cols-1;
-//        }
-//        else C--;		
-//      }
       startTime = millis();
     }
   } 
