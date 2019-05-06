@@ -64,10 +64,10 @@ class ScenarioTimerPass : public Scenario
     void initSettings()
     {
       setCurrentState(State::PLAY);
-      randomSeed(analogRead(0));
-      a = random(1,20);
-      randomSeed(analogRead(1));  
-      b = random(1,20);
+      randomSeed(analogRead(1));
+      a = random(5,50);
+      randomSeed(analogRead(2));  
+      b = random(5,50);
       setLCDText("Duree en minutes", 0, 0, true, false);
       bool finishInit = false;
       String inString = "";
@@ -80,7 +80,8 @@ class ScenarioTimerPass : public Scenario
           else if (keypress == 'B') {}
           else if (keypress == 'C')
           {
-            finishInit = true;
+            if (inString.length() != 0)
+              finishInit = true;
           }
           else if (keypress == 'D')
           {
@@ -127,11 +128,7 @@ class ScenarioTimerPass : public Scenario
             else if (keypress == 'D')
             {
               if (inString.length() > 0)
-              {
-                Serial.println(inString);
                 inString = inString.substring(0, inString.length() - 1);
-                Serial.println(inString);
-              }
             }
             else
             {

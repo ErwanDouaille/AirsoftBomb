@@ -19,7 +19,7 @@ void setup()
   strcpy(menuName, "CAPS - BOMB");
   strcpy(scenarioName1, "1 - Timer");
   strcpy(scenarioName2, "2 - Defuse");
-  strcpy(scenarioName3, "3 - Settings");
+  strcpy(scenarioName3, "3 - Domination");
   
   Scenario* scenarios[3] = 
   {
@@ -37,5 +37,3 @@ void loop()
   menu->setLCDText(menu->getCurrentMenu()->getName(), 0, 1, false, true);
   menu->runScenario();
 }
-
-

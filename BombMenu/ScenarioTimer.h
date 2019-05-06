@@ -36,7 +36,8 @@ class ScenarioTimer : public Scenario
           else if (keypress == 'B') {}
           else if (keypress == 'C')
           {
-            finishInit = true;
+            if (inString.length() != 0)
+              finishInit = true;
           }
           else if (keypress == 'D')
           {
@@ -62,17 +63,12 @@ class ScenarioTimer : public Scenario
     void reset()
     {
       pinMode(buzzerPin, OUTPUT);
+      pinMode(desamorcedPin, INPUT);
       delayBeeper = 100;
       delayTimer = 1000;
       desamorced = false;
       digitalWrite(buzzerPin, LOW);
-      digitalWrite(desamorcedPin, LOW);
       initSettings();
-    }
-    
-    void desamorcedLed()
-    {
-      digitalWrite(desamorcedPin, HIGH);
     }
 
     void printDuration()
@@ -131,11 +127,20 @@ class ScenarioTimer : public Scenario
       while (m_currentState == State::PLAY)
       {
         timer.update();
-
-        if (desamorced)
-          desamorcedLed();
+        desamorcedValue = digitalRead(desamorcedPin);   // read the input pin
+        if (desamorcedValue == HIGH)
+          succeed();
       }
+      while (m_currentState == State::STOP && desamorced) {}
     };
+
+    void succeed()
+    {
+      desamorced = true;
+      printDuration();
+      setLCDText("SUCCEED", 0, 1, false, false);
+      m_currentState = State::STOP;
+    }
 
   private:
     int timerId;
@@ -146,6 +151,7 @@ class ScenarioTimer : public Scenario
     int delayTimer;
     int buzzerPin = 6;
     int desamorcedPin = 7;
+    int desamorcedValue;
     Timer timer;
 };
 

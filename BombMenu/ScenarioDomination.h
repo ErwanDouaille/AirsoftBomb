@@ -62,7 +62,14 @@ class ScenarioDomination : public Scenario
 
     void printScore()
     {
-      String ps = "SCORE";
+      String ps = "";
+      for (int i = 0; i < scoreListSize; i++)
+      {
+        ps += i+1;
+        ps += ":";
+        ps += scoreList[i];
+        ps += " ";
+      }
       char copy[16];
       ps.toCharArray(copy, 16);
       setLCDText(copy, 0, 1, false, false);
@@ -83,7 +90,8 @@ class ScenarioDomination : public Scenario
           else if (keypress == 'D') {}
           else if (keypress == 'C')
           {
-            finishInit = true;
+            if (inString.length() != 0)
+              finishInit = true;
           }
           else
           {
@@ -103,7 +111,7 @@ class ScenarioDomination : public Scenario
 
     void initSettingsTeams()
     {
-      setLCDText("Nb team", 0, 0, true, false);
+      setLCDText("Nb team (2-4)", 0, 0, true, false);
       bool finishInit = false;
       String inString = "";
       while (!finishInit)
@@ -115,7 +123,9 @@ class ScenarioDomination : public Scenario
           else if (keypress == 'B') {}
           else if (keypress == 'C')
           {
-            finishInit = true;
+            bool correctInput = (inString.compareTo("2") == 0 || inString.compareTo("3") == 0 || inString.compareTo("4") == 0);
+            if (inString.length() != 0 && correctInput)
+              finishInit = true;
           }
           else if (keypress == 'D')
           {
@@ -228,20 +238,6 @@ class ScenarioDomination : public Scenario
 
     void counterScenarioTimer()
     { 
-      Serial.println("SCORE --- ");
-      for (int i = 0; i < scoreListSize; i++)
-      {
-        Serial.print(i+1);
-        Serial.print(" - ");
-        Serial.println(scoreList[i]);
-      }
-      Serial.println("DELAY --- ");
-      for (int i = 0; i < scoreListSize; i++)
-      {
-        Serial.print(i+1);
-        Serial.print(" - ");
-        Serial.println(scoreListTimer[i]);
-      }
       beeping(buzzerPin, 10, delayBeeper);
       duration = duration > 0 ? duration - 1 : duration;
       for (int i = 0; i < scoreListSize; i++)
